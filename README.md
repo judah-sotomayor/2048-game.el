@@ -1,24 +1,22 @@
 # 2048-game.el #
+**All credit to ZCK's original implementation: https://hg.sr.ht/~zck/game-2048**
 
-This is an implementation of [2048](http://gabrielecirulli.github.io/2048/) in Emacs.
-
-It has a [bug tracker](https://todo.sr.ht/~zck/game-2048).
+I have enhanced it with a persistent game history file, allowing you to continue your attempts at reaching 2048 on separate days.
 
 ### Installing 2048-game.el ###
+Original install instructions can be found in zck's repo.
+To add to Doom emacs, use the following:
 
-There are two ways to install 2048-game.el:
+packages.el:
+``` emacs-lisp
+(package! 2048-game
+  :recipe (:host github :repo "judah-sotomayor/2048-game.el"))
+```
 
-1. **[MELPA](https://melpa.org/#/2048-game)** -- a package manager for emacs. This is the recommended way to install 2048-game.el
-    1. Follow the instructions under "installing" on MELPA's [getting started](https://melpa.org/#/getting-started) page.
-    2. Restart Emacs, to make it reload your init file.
-    3. Run `M-x package-list-packages`.
-    4. Find this package in the package list, and move point (the cursor) there. It should one of the first few in the list.
-    5. Press `i` to mark the package for installation.
-    6. Press `x` to execute the commands and install the marked package.
-
-2. You can install the game from source. This is not recommended unless you're changing the code.
-    1. Clone this repository.
-    2. Run `M-x load-file`, then navigate to the repository, and load `2048-game.el`
+config.el:
+``` emacs-lisp
+(use-package! 2048-game)
+```
 
 ### Playing ###
 

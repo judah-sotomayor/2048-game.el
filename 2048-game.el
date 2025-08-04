@@ -62,13 +62,17 @@
 
 ;;;###autoload
 (defun 2048-game () "Start playing 2048."
-  (interactive)
-  (switch-to-buffer "2048")
-  (buffer-disable-undo "2048")
-  (2048-mode)
-  (2048-init))
+       (interactive)
+       (switch-to-buffer "2048")
+       (buffer-disable-undo "2048")
+       (when 2048-savefile (setq *2048-history* (2048--load-history 2048-savefile)))
+       (2048-mode)
+       (2048-init))
 
 (require 'cl-lib)
+
+(defcustom 2048-savefile (locate-user-emacs-file "2048-history")
+  "File to save scores in. Nil if the user does not wish to save scores.")
 
 (defvar *2048-board* nil
   "The board itself.
@@ -148,7 +152,7 @@ other time.")
 (defun 2048-get-face-symbol (number)
   "Return the face symbol for squares holding NUMBER."
   (intern (concat "twentyfortyeight-face-"
-                   (int-to-string number))))
+                  (int-to-string number))))
 
 (defun 2048-empty-tile (num)
   "Return the tile to be inserted for the blank part of a square holding NUM.
@@ -175,7 +179,7 @@ The tile is the string, but with extra font stuff on it."
 
 This macro is used to do some housekeeping around the move."
   `(progn (setq *2048-combines-this-move* (make-vector (* *2048-columns* *2048-rows*)
-                                               nil))
+                                                       nil))
 
           ,@body
           (2048-print-board)
@@ -306,6 +310,33 @@ This acts by notifying the user and restarting."
          (when (y-or-n-p "Aw, too bad.  You lost.  Want to play again? ")
            (2048-init)))))
 
+
+
+(defun 2048--save-history (history file)
+  "Write HISTORY to FILE."
+  (with-temp-buffer
+    (let ((coding-sytstem-for-write (or coding-system-for-write 'utf-8-emacs)))
+      (insert (format ";; -*- coding: %S; mode: lisp-data -*-\n" coding-system-for-write))
+      (insert "(")
+      (dolist (i history) (pp i (current-buffer)))
+      (insert ")\n")
+
+      (condition-case nil
+          (write-file file)
+        (file-error (message "Can't write %s" file)))
+      (kill-buffer (current-buffer)))))
+
+
+(defun 2048--load-history (file)
+  "Load history from FILE."
+  (if (f-file-p file)
+      (progn (unless (file-readable-p file)
+               (user-error "Cannot read history file %s" (abbreviate-file-name file)))
+             (with-current-buffer (find-file-noselect file)
+               (prog1 (read (current-buffer))
+                 (kill-buffer (current-buffer)))))))
+
+
 (defun 2048-add-new-history-item (score hi-tile game-end-time game-duration)
   "Generate and add a new history item to the score list.
 
@@ -323,7 +354,8 @@ have ended at GAME-END-TIME, and have duration GAME-DURATION"
                             :key 'car)
                    (max 0
                         (- (1+ history-length)
-                           *2048-history-size*))))))
+                           *2048-history-size*)))))
+  (2048--save-history *2048-history* 2048-savefile))
 
 (defun 2048-game-was-won ()
   "Return t if the game was won, nil otherwise."
@@ -407,12 +439,12 @@ have ended at GAME-END-TIME, and have duration GAME-DURATION"
                            1
                          (ceiling (log *2048-score* 10)))))
       (insert (format "%10s%s%s\n" "/" (make-string (+ 9
-                                                      score-width)
-                                                   ?\=) "\\"))
+                                                       score-width)
+                                                    ?\=) "\\"))
       (insert (format "%10s %s %d %s\n" "|" "Score:" *2048-score* "|"))
       (insert (format "%10s%s%s\n" "\\" (make-string (+ 9
-                                                       score-width)
-                                                    ?\=) "/")))
+                                                        score-width)
+                                                     ?\=) "/")))
     (insert "\n")
 
     (2048-print-help)
